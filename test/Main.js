@@ -6,7 +6,7 @@ describe("Main", function () {
     let acc2
     let main
 
-    const ownerAccountName = 'QUADARD';
+    const ownerAccountName = ethers.utils.formatBytes32String('QUADARD');
 
     beforeEach(async () => {
         [acc1, acc2] = await ethers.getSigners();
@@ -28,11 +28,19 @@ describe("Main", function () {
 
     it('should create another user account', async function () {
         let user = await main.users(acc1.address);
-        expect('0x0000000000000000000000000000000000000000').to.equal(user.wallet);
+        expect(ethers.constants.AddressZero).to.equal(user.wallet);
 
-        await main.setUser('quadrad_2', acc2.address);
+        await main.setUser(ethers.utils.formatBytes32String('quadrad_2'), acc2.address);
         user = await main.users(acc2.address);
         expect(user.wallet).to.equal(acc2.address);
+    });
+
+    it('should deposit 1000 tokens', async function () {
+        await main.setUser(ethers.utils.formatBytes32String('quadrad_2'), acc2.address);
+        await main.connect(acc2).deposit(1000);
+
+        const balance = await main.userBalance(acc2.address);
+        expect(balance.toString()).to.equal('1000');
     });
 
 
