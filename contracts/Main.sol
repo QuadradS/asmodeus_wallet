@@ -11,7 +11,7 @@ contract Main is Ownable {
   struct UserAccount {
     bytes32 name;
     address wallet;
-    int256 amount;
+    uint256 amount;
     uint created;
   }
 
@@ -33,13 +33,27 @@ contract Main is Ownable {
     users[_address] = UserAccount(_name, _address, 0, block.timestamp);
   }
 
-  function deposit(int256 amount) public _onlyExists {
-    users[msg.sender].amount = users[msg.sender].amount + amount;
+  function deposit() payable public _onlyExists {
+    require(msg.value > 0, 'not a negative balance');
+    users[msg.sender].amount += msg.value;
   }
 
-  function userBalance(address _address) public view returns(int256) {
-    return users[_address].amount;
+  function userBalance(address _address) public view returns(uint256) {
+    return address(this).balance; // users[_address].amount;
   }
 
+  function transfer(address _to, uint256 _amount) public _onlyExists {
+    require(_to != address(0), 'Not null address');
+    require(users[msg.sender].amount >= _amount, 'Not enough amount');
 
+    users[_to].amount += _amount;
+    users[msg.sender].amount -= _amount;
+  }
+
+  function withdraw() payable public _onlyExists {
+    require(users[msg.sender].amount >= msg.value, 'Not enough amount');
+    // require(_to != address(0), 'Non zero account for withdraw');
+    users[msg.sender].amount -= msg.value;
+    payable(msg.sender).transfer(msg.value);
+  }
 }

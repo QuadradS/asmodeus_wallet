@@ -5,6 +5,7 @@ describe("Main", function () {
     let acc1
     let acc2
     let main
+    const provider = ethers.provider;
 
     const ownerAccountName = ethers.utils.formatBytes32String('QUADARD');
 
@@ -35,13 +36,41 @@ describe("Main", function () {
         expect(user.wallet).to.equal(acc2.address);
     });
 
-    it('should deposit 1000 tokens', async function () {
+    it('should deposit 1 ether', async function () {
+        const transferValue = ethers.utils.parseEther('1');
+
         await main.setUser(ethers.utils.formatBytes32String('quadrad_2'), acc2.address);
-        await main.connect(acc2).deposit(1000);
+        await main.connect(acc2).deposit({value: transferValue});
 
         const balance = await main.userBalance(acc2.address);
-        expect(balance.toString()).to.equal('1000');
+        expect(balance.toString()).to.equal(transferValue);
     });
 
+    it('should transfer 1 ether from acc2 to acc1', async function () {
+        const transferValue = ethers.utils.parseEther('1');
+        await main.setUser(ethers.utils.formatBytes32String('quadrad_2'), acc2.address);
+        await main.connect(acc2).deposit({value: transferValue});
+        await main.connect(acc2).transfer(acc1.address, transferValue);
 
+        const balance = await main.userBalance(acc1.address);
+        expect(balance.toString()).to.equal(transferValue);
+    });
+
+    // TODO not finished
+    it('should withdraw 1 ether from acc2 to acc1', async function () {
+        const withdrawValue = ethers.utils.parseEther('1');
+        const depositValue = ethers.utils.parseEther('5');
+
+        await main.setUser(ethers.utils.formatBytes32String('quadrad_2'), acc2.address);
+        await main.connect(acc2).deposit({value: depositValue});
+        await main.connect(acc2).withdraw({value: withdrawValue});
+        const balance = main.userBalance(acc2.address);
+        const acc2Balance = await provider.getBalance(acc2.address);
+        const contractBalance = await provider.getBalance(main.address);
+
+
+
+        console.log('cost ', contractBalance, acc2Balance, balance);
+       // expect(balance.toString()).to.equal(transferValue);
+    });
 });
